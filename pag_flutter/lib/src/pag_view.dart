@@ -7,8 +7,8 @@ import 'pag_controller.dart';
 import 'pag_file.dart';
 import 'pag_scale_mode.dart';
 
-const _kRepeatCount = 1;
-const _kScaleMode = i.PAGScaleMode.stretch;
+const _kRepeatCount = 0;
+const _kScaleMode = i.PAGScaleMode.letterBox;
 const _kProgress = 0.0;
 
 class PAGView extends StatefulWidget {
