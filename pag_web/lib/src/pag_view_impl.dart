@@ -124,6 +124,7 @@ final class PAGViewImpl extends PAGView {
   Future<void> setProgress(double value) async {
     final api = await this.api.future;
     api.setProgress(value);
+    await api.flush().toDart;
   }
 
   @override
@@ -136,6 +137,7 @@ final class PAGViewImpl extends PAGView {
   Future<void> setScaleMode(PAGScaleMode value) async {
     final api = await this.api.future;
     api.setScaleMode(value.api);
+    await api.flush().toDart;
   }
 
   @override
