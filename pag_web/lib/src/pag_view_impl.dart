@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:js_interop';
+import 'dart:js_interop' as web;
 import 'dart:ui_web' as web;
 
 import 'package:flutter/widgets.dart';
 import 'package:pag_platform_interface/pag_platform_interface.dart';
 import 'package:web/web.dart' as web;
 
-import 'js_interop.dart' as js;
+import 'js_interop.dart' as web;
 import 'pag_composition_impl.dart';
 import 'pag_scale_mode.dart';
 
@@ -14,7 +14,9 @@ const kPAGViewType = 'zeekr.dev/PAGView';
 
 final class PAGViewImpl extends PAGView {
   final Completer<web.HTMLCanvasElement> canvas;
-  final Completer<js.PAGView> api;
+  final Completer<web.PAGView> api;
+
+  late final web.ResizeObserver _resizeObserver;
 
   PAGViewImpl() : canvas = Completer(), api = Completer(), super.impl();
 
@@ -90,8 +92,9 @@ final class PAGViewImpl extends PAGView {
     if (api.isCompleted) {
       final api = await this.api.future;
       api.setComposition(compositionApi);
+      await api.flush().toDart;
     } else {
-      final libPAG = await js.libPAG;
+      final libPAG = await web.libPAG;
       final canvas = await this.canvas.future;
       // 按当前显示尺寸设置 canvas 缓冲，避免 init 默认 useScale=true
       // 将 canvas.style 覆盖为固定 px，导致 canvas 脱离 Flutter 布局。
@@ -99,7 +102,7 @@ final class PAGViewImpl extends PAGView {
       final devicePixelRatio = web.window.devicePixelRatio;
       canvas.width = (rect.width * devicePixelRatio).round();
       canvas.height = (rect.height * devicePixelRatio).round();
-      final options = js.PAGViewOptions()..useScale = false;
+      final options = web.PAGViewOptions()..useScale = false;
       final api = await libPAG.PAGView.init(
         compositionApi,
         canvas,
@@ -108,14 +111,20 @@ final class PAGViewImpl extends PAGView {
       // 监听窗口 resize，同步 canvas 缓冲尺寸并重建 surface。
       // canvas style 保持 100%（useScale=false 不覆盖），
       // 窗口变化时 getBoundingClientRect 返回最新显示尺寸。
-      web.window.onresize = ((web.Event _) {
-        final rect = canvas.getBoundingClientRect();
-        final devicePixelRatio = web.window.devicePixelRatio;
-        canvas.width = (rect.width * devicePixelRatio).round();
-        canvas.height = (rect.height * devicePixelRatio).round();
-        api.updateSize();
-        api.flush().toDart;
-      }).toJS;
+      _resizeObserver = web.ResizeObserver(
+        ((
+              web.JSArray<web.ResizeObserverEntry> entries,
+              web.ResizeObserver observer,
+            ) {
+              final rect = canvas.getBoundingClientRect();
+              final devicePixelRatio = web.window.devicePixelRatio;
+              canvas.width = (rect.width * devicePixelRatio).round();
+              canvas.height = (rect.height * devicePixelRatio).round();
+              api.updateSize();
+              api.flush();
+            })
+            .toJS,
+      )..observe(canvas);
       this.api.complete(api);
     }
   }
