@@ -32,7 +32,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('PAG')),
         body: Column(
           children: [
             Spacer(),
@@ -44,11 +43,11 @@ class _MyAppState extends State<MyApp> {
                   Expanded(
                     flex: 3,
                     child: PAGView.asset(
-                      'assets/scan.pag',
+                      'assets/logo.pag',
                       controller: controller,
-                      repeatCount: 0,
-                      scaleMode: PAGScaleMode.letterBox,
-                      progress: 0.0,
+                      // repeatCount: 0,
+                      // scaleMode: PAGScaleMode.letterBox,
+                      // progress: 0.0,
                     ),
                   ),
                   Spacer(),
