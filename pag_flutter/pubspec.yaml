@@ -18,6 +18,7 @@ dependencies:
   pag_platform_interface: ^1.0.0
   pag_android: ^1.0.0
   pag_darwin: ^1.0.0
+  pag_web: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -33,3 +34,5 @@ flutter:
         default_package: pag_darwin
       macos:
         default_package: pag_darwin
+      web:
+        default_package: pag_web

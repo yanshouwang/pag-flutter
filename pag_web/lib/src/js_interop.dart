@@ -1,19 +1,192 @@
+// ignore_for_file: non_constant_identifier_names
+
 @JS('libpag')
 library;
 
+import 'dart:async';
 import 'dart:js_interop';
 import 'package:web/web.dart' as web;
+
+Future<PAG> libPAG = () async {
+  await loadScript('4.5.85');
+  final value = await initPAG().toDart;
+  return value;
+}();
+
+Future<void> loadScript(String version) async {
+  final completer = Completer<void>();
+  try {
+    final head = ArgumentError.checkNotNull(web.document.head, 'head');
+    final script =
+        web.document.createElement('script') as web.HTMLScriptElement;
+    script.type = 'module';
+    script.src =
+        'https://cdn.jsdelivr.net/npm/libpag@$version/lib/libpag.min.js';
+    script.onload = ((web.Event _) => completer.complete()).toJS;
+    script.onerror = ((web.ErrorEvent e) => completer.completeError(e)).toJS;
+    head.append(script);
+  } catch (e) {
+    completer.completeError(e);
+  }
+  await completer.future;
+}
 
 // ========== classes ==========
 
 /// 对应 `libpag.PAGInit(moduleOption?)`。
 @JS('PAGInit')
-external JSPromise<PAG> init([ModuleOption? moduleOption]);
+external JSPromise<PAG> initPAG([ModuleOption? moduleOption]);
+
+/// 对应全局 `fetch`，用于 Web 端按 URL 加载 .pag 文件。
+@JS('fetch')
+external JSPromise<web.Response> fetch(String url);
 
 /// WASM 模块实例，对应 `types.PAG`。
+/// libpag 4.x 中 `PAGFile`/`PAGView` 等构造类均挂在 PAGInit() 返回的
+/// PAG 实例上（如 `PAG.PAGFile.load(...)`），而非全局 `libpag` 命名空间，
+/// 因此通过下方 getter 从实例取构造类。
 extension type PAG._(JSObject _) implements JSObject {
   @JS('SDKVersion')
-  external String sdkVersion;
+  external String sdkVersion();
+
+  external PAGFileCtor get PAGFile;
+  external PAGCompositionCtor get PAGComposition;
+  external PAGImageCtor get PAGImage;
+  external PAGImageLayerCtor get PAGImageLayer;
+  external PAGTextLayerCtor get PAGTextLayer;
+  external PAGSolidLayerCtor get PAGSolidLayer;
+  external PAGSurfaceCtor get PAGSurface;
+  external PAGPlayerCtor get PAGPlayer;
+  external PAGViewCtor get PAGView;
+  external PAGFontCtor get PAGFont;
+  external MatrixCtor get Matrix;
+}
+
+// ========== 构造类（PAG 实例上的静态类对象） ==========
+
+/// 对应 `PAG.PAGFile` 构造类。
+extension type PAGFileCtor._(JSObject _) implements JSObject {
+  /// 从 File/Blob/ArrayBuffer 异步加载，对应 `PAGFile.load(data)`。
+  external JSPromise<PAGFile> load(JSAny data);
+  external PAGFile loadFromBuffer(JSArrayBuffer buffer);
+  external int maxSupportedTagLevel();
+}
+
+/// 对应 `PAG.PAGComposition` 构造类。
+extension type PAGCompositionCtor._(JSObject _) implements JSObject {
+  external PAGComposition make(num width, num height);
+}
+
+/// 对应 `PAG.PAGImage` 构造类。
+extension type PAGImageCtor._(JSObject _) implements JSObject {
+  external JSPromise<PAGImage> fromFile(web.File data);
+  external PAGImage fromSource(JSObject source);
+  external PAGImage fromPixels(
+    JSUint8Array pixels,
+    num width,
+    num height,
+    ColorType colorType,
+    AlphaType alphaType,
+  );
+  external PAGImage fromTexture(
+    num textureID,
+    num width,
+    num height,
+    bool flipY,
+  );
+}
+
+/// 对应 `PAG.PAGImageLayer` 构造类。
+extension type PAGImageLayerCtor._(JSObject _) implements JSObject {
+  external PAGImageLayer make(num width, num height, int duration);
+}
+
+/// 对应 `PAG.PAGTextLayer` 构造类。
+extension type PAGTextLayerCtor._(JSObject _) implements JSObject {
+  /// 字符串参数重载，对应 `PAGTextLayer.make(duration, text, fontSize, fontFamily, fontStyle)`。
+  external PAGTextLayer make(
+    num duration,
+    String text,
+    num fontSize,
+    String fontFamily,
+    String fontStyle,
+  );
+
+  /// TextDocument 参数重载（JS 侧同名 `make`），Dart 侧改名避免冲突。
+  @JS('make')
+  external PAGTextLayer makeFromDocument(
+    num duration,
+    TextDocument textDocumentHandle,
+  );
+}
+
+/// 对应 `PAG.PAGSolidLayer` 构造类。
+extension type PAGSolidLayerCtor._(JSObject _) implements JSObject {
+  external PAGSolidLayer make(
+    int duration,
+    num width,
+    num height,
+    Color solidColor,
+    num opacity,
+  );
+}
+
+/// 对应 `PAG.PAGSurface` 构造类。
+extension type PAGSurfaceCtor._(JSObject _) implements JSObject {
+  external PAGSurface fromCanvas(String canvasID);
+  external PAGSurface fromTexture(
+    num textureID,
+    num width,
+    num height,
+    bool flipY,
+  );
+  external PAGSurface fromRenderTarget(
+    num frameBufferID,
+    num width,
+    num height,
+    bool flipY,
+  );
+}
+
+/// 对应 `PAG.PAGPlayer` 构造类。
+extension type PAGPlayerCtor._(JSObject _) implements JSObject {
+  external PAGPlayer create();
+}
+
+/// 对应 `PAG.PAGView` 构造类。
+extension type PAGViewCtor._(JSObject _) implements JSObject {
+  /// 对应 `PAGView.init(file, canvas, initOptions?)`。
+  /// 返回类型为 `JSPromise<PAGView>`：init 是唯一完成渲染初始化的入口，
+  /// 它会创建 renderCanvas/pagGlContext/pagSurface 并 setSurface/setComposition。
+  external JSPromise<PAGView> init(
+    PAGComposition file,
+    JSAny canvas, [
+    JSObject? initOptions,
+  ]);
+}
+
+/// 对应 `PAG.PAGFont` 构造类。
+extension type PAGFontCtor._(JSObject _) implements JSObject {
+  external PAGFont create(String fontFamily, String fontStyle);
+  external JSPromise<JSAny?> registerFont(String family, web.File data);
+  external void registerFallbackFontNames([JSArray<JSString>? fontNames]);
+}
+
+/// 对应 `PAG.Matrix` 构造类。
+extension type MatrixCtor._(JSObject _) implements JSObject {
+  external Matrix makeAll(
+    double scaleX,
+    double skewX,
+    double transX,
+    double skewY,
+    double scaleY,
+    double transY, [
+    double pers0,
+    double pers1,
+    double pers2,
+  ]);
+  external Matrix makeScale(double scaleX, [double scaleY]);
+  external Matrix makeTrans(double dx, double dy);
 }
 
 /// 图层基类，对应 `pag-layer.PAGLayer`。
@@ -56,8 +229,6 @@ extension type PAGLayer._(JSObject _) implements JSObject {
 
 /// 画布合成容器，对应 `pag-composition.PAGComposition`。
 extension type PAGComposition._(JSObject _) implements PAGLayer {
-  external static PAGComposition make(num width, num height);
-
   external num width();
   external num height();
   external void setContentSize(num width, num height);
@@ -82,11 +253,6 @@ extension type PAGComposition._(JSObject _) implements PAGLayer {
 
 /// PAG 文件，对应 `pag-file.PAGFile`。
 extension type PAGFile._(JSObject _) implements PAGComposition {
-  /// 从 File/Blob/ArrayBuffer 异步加载，对应 `PAGFile.load(data)`。
-  external static JSPromise<PAGFile> load(JSAny data);
-  external static PAGFile loadFromBuffer(JSArrayBuffer buffer);
-  external static int maxSupportedTagLevel();
-
   external int tagLevel();
   external int numTexts();
   external int numImages();
@@ -107,8 +273,6 @@ extension type PAGFile._(JSObject _) implements PAGComposition {
 
 /// 图片图层，对应 `pag-image-layer.PAGImageLayer`。
 extension type PAGImageLayer._(JSObject _) implements PAGLayer {
-  external static PAGImageLayer make(num width, num height, int duration);
-
   external int contentDuration();
   external JSArray<JSObject> getVideoRanges();
   external void replaceImage(PAGImage? pagImage);
@@ -120,22 +284,6 @@ extension type PAGImageLayer._(JSObject _) implements PAGLayer {
 
 /// 文本图层，对应 `pag-text-layer.PAGTextLayer`。
 extension type PAGTextLayer._(JSObject _) implements PAGLayer {
-  /// 字符串参数重载，对应 `PAGTextLayer.make(duration, text, fontSize, fontFamily, fontStyle)`。
-  external static PAGTextLayer make(
-    num duration,
-    String text,
-    num fontSize,
-    String fontFamily,
-    String fontStyle,
-  );
-
-  /// TextDocument 参数重载（JS 侧同名 `make`），Dart 侧改名避免冲突。
-  @JS('make')
-  external static PAGTextLayer makeFromDocument(
-    num duration,
-    TextDocument textDocumentHandle,
-  );
-
   external Color fillColor();
   external void setFillColor(Color value);
   external PAGFont font();
@@ -151,36 +299,12 @@ extension type PAGTextLayer._(JSObject _) implements PAGLayer {
 
 /// 纯色图层，对应 `pag-solid-layer.PAGSolidLayer`。
 extension type PAGSolidLayer._(JSObject _) implements PAGLayer {
-  external static PAGSolidLayer make(
-    int duration,
-    num width,
-    num height,
-    Color solidColor,
-    num opacity,
-  );
-
   external Color solidColor();
   external void setSolidColor(Color color);
 }
 
 /// 图片对象，对应 `pag-image.PAGImage`。
 extension type PAGImage._(JSObject _) implements JSObject {
-  external static JSPromise<PAGImage> fromFile(web.File data);
-  external static PAGImage fromSource(JSObject source);
-  external static PAGImage fromPixels(
-    JSUint8Array pixels,
-    num width,
-    num height,
-    ColorType colorType,
-    AlphaType alphaType,
-  );
-  external static PAGImage fromTexture(
-    num textureID,
-    num width,
-    num height,
-    bool flipY,
-  );
-
   external num width();
   external num height();
   external PAGScaleMode scaleMode();
@@ -192,20 +316,6 @@ extension type PAGImage._(JSObject _) implements JSObject {
 
 /// 渲染表面，对应 `pag-surface.PAGSurface`。
 extension type PAGSurface._(JSObject _) implements JSObject {
-  external static PAGSurface fromCanvas(String canvasID);
-  external static PAGSurface fromTexture(
-    num textureID,
-    num width,
-    num height,
-    bool flipY,
-  );
-  external static PAGSurface fromRenderTarget(
-    num frameBufferID,
-    num width,
-    num height,
-    bool flipY,
-  );
-
   external num width();
   external num height();
   external void updateSize();
@@ -217,12 +327,6 @@ extension type PAGSurface._(JSObject _) implements JSObject {
 
 /// 字体对象，对应 `pag-font.PAGFont`。
 extension type PAGFont._(JSObject _) implements JSObject {
-  external static PAGFont create(String fontFamily, String fontStyle);
-  external static JSPromise<JSAny?> registerFont(String family, web.File data);
-  external static void registerFallbackFontNames([
-    JSArray<JSString>? fontNames,
-  ]);
-
   external String get fontFamily;
   external String get fontStyle;
   external void destroy();
@@ -230,8 +334,6 @@ extension type PAGFont._(JSObject _) implements JSObject {
 
 /// 播放器（无 UI 控制），对应 `pag-player.PAGPlayer`。
 extension type PAGPlayer._(JSObject _) implements JSObject {
-  external static PAGPlayer create();
-
   external void setProgress(num progress);
   external JSPromise<JSBoolean> flush();
   external int duration();
@@ -277,16 +379,6 @@ extension type PAGPlayer._(JSObject _) implements JSObject {
 
 /// 播放器视图（自带播放控制与事件），对应 `pag-view.PAGView`。
 extension type PAGView._(JSObject _) implements JSObject {
-  /// 对应 `new PAGView(pagPlayer, canvasElement)`。
-  external factory PAGView(PAGPlayer pagPlayer, JSObject canvasElement);
-
-  /// 对应 `PAGView.init(file, canvas, initOptions?)`。
-  external static JSPromise<JSAny?> init(
-    PAGComposition file,
-    JSAny canvas, [
-    JSObject? initOptions,
-  ]);
-
   external int get repeatCount;
   external set repeatCount(int value);
   external bool get isPlaying;
@@ -307,7 +399,7 @@ extension type PAGView._(JSObject _) implements JSObject {
   external void setRepeatCount(int repeatCount);
   external num getProgress();
   external int currentFrame();
-  external int setProgress(num progress);
+  external num setProgress(num progress);
   external bool videoEnabled();
   external void setVideoEnabled(bool enable);
   external bool cacheEnabled();
@@ -335,20 +427,6 @@ extension type PAGView._(JSObject _) implements JSObject {
 
 /// 矩阵工具类，对应 `core_matrix.Matrix`。
 extension type Matrix._(JSObject _) implements JSObject {
-  external static Matrix makeAll(
-    double scaleX,
-    double skewX,
-    double transX,
-    double skewY,
-    double scaleY,
-    double transY, [
-    double pers0,
-    double pers1,
-    double pers2,
-  ]);
-  external static Matrix makeScale(double scaleX, [double scaleY]);
-  external static Matrix makeTrans(double dx, double dy);
-
   external double get a;
   external set a(double value);
   external double get b;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:pag_platform_interface/pag_platform_interface.dart';
@@ -6,25 +7,27 @@ import 'js_interop.dart' as js;
 import 'pag_file_impl.dart';
 
 base mixin PAGCompositionImpl on PAGComposition {
-  js.PAGComposition get api;
+  FutureOr<js.PAGComposition> get api;
 
   @override
-  Future<int> getWidth() {
+  Future<int> getWidth() async {
+    final api = await this.api;
     final value = api.width().toInt();
-    return Future.value(value);
+    return value;
   }
 
   @override
-  Future<int> getHeight() {
+  Future<int> getHeight() async {
+    final api = await this.api;
     final value = api.height().toInt();
-    return Future.value(value);
+    return value;
   }
 }
 
 extension PAGCompositionX on PAGComposition {
-  js.PAGComposition get api {
+  FutureOr<js.PAGComposition> get api {
     final impl = this;
-    if (impl is! PAGFileImpl) {
+    if (impl is! PAGCompositionImpl) {
       throw TypeError();
     }
     return impl.api;
