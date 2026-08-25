@@ -21,7 +21,12 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    controller = PAGController()..play();
+    controller = PAGController.asset(
+      'assets/logo.pag',
+      scaleMode: .letterBox,
+      repeatCount: 0,
+      progress: 0.0,
+    )..play();
 
     Timer.periodic(Durations.extralong4, (_) {
       setState(() {});
@@ -31,33 +36,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        body: Column(
-          children: [
-            Spacer(),
-            Expanded(
-              flex: 3,
-              child: Row(
-                children: [
-                  Spacer(),
-                  Expanded(
-                    flex: 3,
-                    child: PAGView.asset(
-                      'assets/logo.pag',
-                      controller: controller,
-                      // repeatCount: 0,
-                      // scaleMode: PAGScaleMode.letterBox,
-                      // progress: 0.0,
-                    ),
-                  ),
-                  Spacer(),
-                ],
-              ),
-            ),
-            Spacer(),
-          ],
-        ),
-      ),
+      home: Scaffold(body: PAGWidget(controller: controller)),
     );
   }
 

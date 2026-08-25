@@ -1,18 +1,12 @@
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:pag_platform_interface/pag_platform_interface.dart';
 
 import 'api.g.dart';
 import 'api.x.dart';
 
-const _kViewType = 'zeekr.dev/PAGView';
-
 final class PAGViewImpl extends PAGView {
   PAGViewApi api;
 
-  PAGViewImpl()
-      : api = PAGViewApi(),
-        super.impl();
+  PAGViewImpl() : api = PAGViewApi(), super.impl();
 
   @override
   Future<PAGComposition> getComposition() async {
@@ -78,15 +72,12 @@ final class PAGViewImpl extends PAGView {
   Future<void> stop() async {
     await api.stop();
   }
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final identifier = api.pigeon_instanceManager.getIdentifier(api);
-    return AndroidView(
-      viewType: _kViewType,
-      layoutDirection: TextDirection.ltr,
-      creationParams: identifier,
-      creationParamsCodec: const StandardMessageCodec(),
-    );
+extension PAGViewX on PAGView {
+  PAGViewApi get api {
+    final impl = this;
+    if (impl is! PAGViewImpl) throw TypeError();
+    return impl.api;
   }
 }

@@ -13,11 +13,11 @@ extension PAGScaleModeApiX on PAGScaleModeApi {
 
 extension PAGCompositionX on PAGComposition {
   PAGCompositionApi get api {
-    final file = this;
-    if (file is! PAGFileImpl) {
+    final impl = this;
+    if (impl is! PAGFileImpl) {
       throw TypeError();
     }
-    return file.api;
+    return impl.api;
   }
 }
 

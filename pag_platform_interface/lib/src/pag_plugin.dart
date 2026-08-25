@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'pag_composition.dart';
 import 'pag_file.dart';
+import 'pag_scale_mode.dart';
 import 'pag_view.dart';
 
 abstract base class PAGPlugin extends PlatformInterface {
@@ -32,8 +35,14 @@ abstract base class PAGPlugin extends PlatformInterface {
     _instance = instance;
   }
 
-  PAGFile newPAGAsset(String asset);
-  PAGFile newPAGFile(String file);
-  PAGFile newPAGBytes(Uint8List bytes);
-  PAGView newPAGView();
+  PAGFile newPAGFileWithAsset(String asset);
+  PAGFile newPAGFileWithFile(String file);
+  PAGFile newPAGFileWithBytes(Uint8List bytes);
+  PAGView newPAGView({
+    required PAGComposition composition,
+    PAGScaleMode? scaleMode,
+    int? repeatCount,
+    double? progress,
+  });
+  Widget newPAGWidget(PAGView view);
 }

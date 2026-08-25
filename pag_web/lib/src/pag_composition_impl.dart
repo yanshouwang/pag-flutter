@@ -3,11 +3,11 @@ import 'dart:js_interop';
 
 import 'package:pag_platform_interface/pag_platform_interface.dart';
 
-import 'js_interop.dart' as js;
+import 'js_interop.dart' as web;
 import 'pag_file_impl.dart';
 
 base mixin PAGCompositionImpl on PAGComposition {
-  FutureOr<js.PAGComposition> get api;
+  FutureOr<web.PAGComposition> get api;
 
   @override
   Future<int> getWidth() async {
@@ -25,7 +25,7 @@ base mixin PAGCompositionImpl on PAGComposition {
 }
 
 extension PAGCompositionX on PAGComposition {
-  FutureOr<js.PAGComposition> get api {
+  FutureOr<web.PAGComposition> get api {
     final impl = this;
     if (impl is! PAGCompositionImpl) {
       throw TypeError();
@@ -34,13 +34,13 @@ extension PAGCompositionX on PAGComposition {
   }
 }
 
-extension JsPAGCompositionX on js.PAGComposition {
+extension JsPAGCompositionX on web.PAGComposition {
   PAGComposition get impl {
     final api = this;
-    final isPAGFile = api.isA<js.PAGFile>();
+    final isPAGFile = api.isA<web.PAGFile>();
     if (!isPAGFile) {
       throw TypeError();
     }
-    return PAGFileImpl(api as js.PAGFile);
+    return PAGFileImpl(api as web.PAGFile);
   }
 }

@@ -1,14 +1,10 @@
-import 'package:flutter/widgets.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'pag_composition.dart';
-import 'pag_plugin.dart';
 import 'pag_scale_mode.dart';
 
 abstract base class PAGView extends PlatformInterface {
   static final _token = Object();
-
-  factory PAGView() => PAGPlugin.instance.newPAGView();
 
   PAGView.impl() : super(token: _token);
 
@@ -28,6 +24,4 @@ abstract base class PAGView extends PlatformInterface {
   Future<void> play();
   Future<void> pause();
   Future<void> stop();
-
-  Widget build(BuildContext context);
 }

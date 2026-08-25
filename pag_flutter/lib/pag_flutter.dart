@@ -1,5 +1,5 @@
-export 'src/pag_composition.dart';
-export 'src/pag_controller.dart';
-export 'src/pag_file.dart';
-export 'src/pag_scale_mode.dart';
+export 'package:pag_platform_interface/pag_platform_interface.dart'
+    show PAGComposition, PAGFile, PAGScaleMode;
+
+export 'src/pag_controller.dart' show PAGController;
 export 'src/pag_view.dart';

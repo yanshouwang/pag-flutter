@@ -1,21 +1,12 @@
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:pag_platform_interface/pag_platform_interface.dart';
 
 import 'api.g.dart';
 import 'api.x.dart';
 
-const _kViewType = 'zeekr.dev/PAGView';
-
-abstract final class PAGViewImpl extends PAGView {
+final class PAGViewImpl extends PAGView {
   PAGViewApi api;
 
-  factory PAGViewImpl.iOS() => _PAGiOSViewImpl();
-  factory PAGViewImpl.macOS() => _PAGmacOSViewImpl();
-
-  PAGViewImpl()
-      : api = PAGViewApi(),
-        super.impl();
+  PAGViewImpl() : api = PAGViewApi(), super.impl();
 
   @override
   Future<PAGComposition> getComposition() async {
@@ -83,28 +74,10 @@ abstract final class PAGViewImpl extends PAGView {
   }
 }
 
-final class _PAGiOSViewImpl extends PAGViewImpl {
-  @override
-  Widget build(BuildContext context) {
-    final identifier = api.pigeon_instanceManager.getIdentifier(api);
-    return UiKitView(
-      viewType: _kViewType,
-      layoutDirection: TextDirection.ltr,
-      creationParams: identifier,
-      creationParamsCodec: const StandardMessageCodec(),
-    );
-  }
-}
-
-final class _PAGmacOSViewImpl extends PAGViewImpl {
-  @override
-  Widget build(BuildContext context) {
-    final identifier = api.pigeon_instanceManager.getIdentifier(api);
-    return AppKitView(
-      viewType: _kViewType,
-      layoutDirection: TextDirection.ltr,
-      creationParams: identifier,
-      creationParamsCodec: const StandardMessageCodec(),
-    );
+extension PAGViewX on PAGView {
+  PAGViewApi get api {
+    final impl = this;
+    if (impl is! PAGViewImpl) throw TypeError();
+    return impl.api;
   }
 }
